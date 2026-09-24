@@ -7,19 +7,31 @@ import streamlit as st
 st.set_page_config(page_title="Análise de Dados - Carros", page_icon="🚗", layout="wide", initial_sidebar_state="collapsed")
 
 FAIXAS = ["0-15", "16-30", "31-60", "61-120", "120+"]
-PALETA = ["#E4572E", "#29B6C5", "#F3A712", "#6C8EAD", "#A8C686", "#B565A7"]
+PALETA = ["#1B7F8C", "#FFB703", "#E63946", "#457B9D", "#8AB17D", "#6D597A"]
 px.defaults.template = "plotly_white"
 px.defaults.color_discrete_sequence = PALETA
 px.defaults.color_continuous_scale = "Tealrose"
 st.markdown("""<style>
-[data-testid="stMetric"]{background:#FFF7F2;border:1px solid #F3D9CC;border-top:5px solid #E4572E;border-radius:12px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-[data-testid="stMetricLabel"],[data-testid="stMetricLabel"] *{color:#5b6b7a !important}
-[data-testid="stMetricValue"],[data-testid="stMetricValue"] *{font-size:1.5rem;color:#12202e !important;font-weight:700}
-.stTabs [data-baseweb="tab"]{background:#E9F6F8;border-radius:8px 8px 0 0;padding:8px 18px;margin-right:6px}
-.stTabs [aria-selected="true"]{background:#E4572E;color:white}
+.stApp{background:#F4F6F9}
+.hero{background:linear-gradient(120deg,#0F2A43 0%,#16496B 55%,#1B7F8C 100%);border-radius:18px;padding:26px 32px;color:#fff;margin-bottom:14px}
+.hero h1{margin:0;font-size:2.2rem;color:#fff}
+.hero h1,.hero h1 *{color:#fff !important}
+.hero h1 span{color:#FFB703 !important}
+[data-testid="stMetricDelta"],[data-testid="stMetricDelta"] *{color:#FFB703 !important}
+.hero p{margin:6px 0 0 0;opacity:.85;font-size:.95rem}
+[data-testid="stMetric"]{background:linear-gradient(135deg,#16496B,#0F2A43);border-radius:16px;padding:18px 20px;box-shadow:0 4px 14px rgba(15,42,67,.25)}
+[data-testid="stMetricLabel"],[data-testid="stMetricLabel"] *{color:#BFD7E6 !important;font-size:.9rem}
+[data-testid="stMetricValue"],[data-testid="stMetricValue"] *{color:#FFFFFF !important;font-size:1.9rem;font-weight:800}
 [data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"]{display:none}
-[data-testid="stVerticalBlockBorderWrapper"]:has(> div > div > [data-testid="stMarkdownContainer"] strong){background:#E9F6F8;border:2px solid #29B6C5;border-radius:12px}
-h2,h3{border-bottom:2px solid #29B6C5;padding-bottom:4px}
+[data-testid="stExpander"]{background:#fff;border:1px solid #DDE5EC;border-radius:14px}
+div[role="radiogroup"]{gap:10px}
+div[role="radiogroup"] label{background:#fff;border:1px solid #CBD7E2;border-radius:999px;padding:6px 20px;cursor:pointer}
+div[role="radiogroup"] label:has(input:checked){background:#FFB703;border-color:#FFB703;font-weight:700}
+div[role="radiogroup"] label > div:first-child,div[role="radiogroup"] label [data-baseweb="radio"]>div:first-child,div[role="radiogroup"] label span:first-child:empty{display:none !important}
+div[role="radiogroup"] label > div:first-child + div{margin-left:0}
+h3{border-left:6px solid #FFB703;padding-left:12px;font-size:1.25rem}
+[data-testid="stPlotlyChart"]{background:#fff;border-radius:14px;padding:0;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+[data-testid="stPlotlyChart"] > div{overflow:hidden !important}
 </style>""", unsafe_allow_html=True)
 
 
@@ -42,10 +54,9 @@ def brl(v):
 
 df = carregar()
 
-st.markdown("<h1 style='margin-bottom:0'>🚗 Análise de Dados <span style='color:#E4572E'>- Carros</span></h1>", unsafe_allow_html=True)
+st.markdown("<div class='hero'><h1>🚗 Análise de Dados <span>- Carros</span></h1><p>Vendas, descontos e estoque · jan/2024 a dez/2025</p></div>", unsafe_allow_html=True)
 dmin, dmax = df["Data_Venda"].min().date(), df["Data_Venda"].max().date()
-with st.container(border=True):
-    st.markdown("**🔎 Filtros**")
+with st.expander("🔎 Filtros", expanded=True):
     c = st.columns([1.3, 1, 1, 1, 1, 1])
     periodo = c[0].date_input("Período", (dmin, dmax), min_value=dmin, max_value=dmax)
     tipo = c[1].multiselect("Tipo de venda", sorted(df["Tipo_Venda"].unique()))
@@ -67,29 +78,31 @@ if f.empty:
     st.warning("Nenhum registro com os filtros escolhidos.")
     st.stop()
 
-k = st.columns(6)
+k = st.columns(3)
 k[0].metric("💰 Faturamento", brl(f["Preco_Vendido"].sum()))
 k[1].metric("🚘 Vendas", f"{len(f):,}".replace(",", "."))
 k[2].metric("🎫 Ticket Médio", brl(f["Preco_Vendido"].mean()))
-k[3].metric("🏷️ Desconto Médio", f"{f['Desconto_Pct'].mean():.2f}%")
-k[4].metric("💸 Desconto Total", brl(f["Desconto_RS"].sum()))
-k[5].metric("📦 Dias em Estoque", f"{f['Dias_Em_Estoque'].mean():.0f}")
+k2 = st.columns(3)
+k2[0].metric("🏷️ Desconto Médio", f"{f['Desconto_Pct'].mean():.2f}%")
+k2[1].metric("💸 Desconto Total", brl(f["Desconto_RS"].sum()))
+k2[2].metric("📦 Dias em Estoque", f"{f['Dias_Em_Estoque'].mean():.0f}")
 st.divider()
 
-tab1, tab2, tab3 = st.tabs(["📊 Visão Geral", "⚠️ Problemas", "🔎 Detalhes"])
+pagina = st.radio("Seção", ["📊 Visão Geral", "⚠️ Problemas", "🔎 Detalhes"], horizontal=True, label_visibility="collapsed")
 
-with tab1:
+if pagina.endswith("Visão Geral"):
     c1, c2 = st.columns([2, 1])
     with c1:
         st.subheader("Evolução do Faturamento (Mensal)")
         m = f.groupby("Mes", as_index=False)["Preco_Vendido"].sum()
         fig = px.bar(m, x="Mes", y="Preco_Vendido", labels={"Preco_Vendido": "Faturamento (R$)", "Mes": ""})
-        fig.update_traces(marker_color="#29B6C5")
+        fig.update_traces(marker_color="#1B7F8C")
         st.plotly_chart(fig, use_container_width=True)
     with c2:
         st.subheader("Faturamento por Categoria")
         c = f.groupby("Categoria", as_index=False)["Preco_Vendido"].sum()
-        fig = px.pie(c, names="Categoria", values="Preco_Vendido", hole=0.55)
+        fig = px.treemap(c, path=["Categoria"], values="Preco_Vendido", color="Categoria")
+        fig.update_traces(textinfo="label+percent root")
         st.plotly_chart(fig, use_container_width=True)
 
     c3, c4 = st.columns(2)
@@ -112,7 +125,7 @@ with tab1:
         d = f.groupby("Estado", as_index=False).size().sort_values("size", ascending=False)
         st.plotly_chart(px.bar(d, x="Estado", y="size", labels={"size": "Vendas"}), use_container_width=True)
 
-with tab2:
+elif pagina.endswith("Problemas"):
     st.subheader("Problema 1: o desconto de fim de mês é o dobro, em qualquer idade de estoque")
     a, b = st.columns(2)
     with a:
@@ -162,7 +175,7 @@ with tab2:
         z1.metric("Vendas com mais de 120 dias em estoque", f"{n120:,}".replace(",", "."), f"{n120 / len(f) * 100:.1f}% das vendas", delta_color="off")
         z2.metric("Desconto absorvido por esse estoque parado", f"{p120:.1f}%")
 
-with tab3:
+else:
     st.subheader("Carros que mais ficam parados em estoque")
     t = (f.groupby(["Marca", "Modelo", "Categoria"], as_index=False)
          .agg(dias_estoque_medio=("Dias_Em_Estoque", "mean"), qtd_vendas=("ID_Venda", "count"),
