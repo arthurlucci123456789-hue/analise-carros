@@ -83,8 +83,8 @@ with tab1:
     with c1:
         st.subheader("Evolução do Faturamento (Mensal)")
         m = f.groupby("Mes", as_index=False)["Preco_Vendido"].sum()
-        fig = px.area(m, x="Mes", y="Preco_Vendido", labels={"Preco_Vendido": "Faturamento (R$)", "Mes": ""})
-        fig.update_traces(line_color="#29B6C5", fillcolor="rgba(41,182,197,0.35)")
+        fig = px.bar(m, x="Mes", y="Preco_Vendido", labels={"Preco_Vendido": "Faturamento (R$)", "Mes": ""})
+        fig.update_traces(marker_color="#29B6C5")
         st.plotly_chart(fig, use_container_width=True)
     with c2:
         st.subheader("Faturamento por Categoria")
